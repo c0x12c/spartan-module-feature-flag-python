@@ -60,7 +60,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":rocket: *${{ env.SERVICE_NAME }} - Publish to PyPI*"
+                    "text": ":rocket: *Publish to PyPI*"
                   }
                 },{
                   "type": "section",
