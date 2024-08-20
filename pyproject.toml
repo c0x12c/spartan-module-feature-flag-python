@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spartan-module-feature-flag"
-version = "0.1.2"
+version = "0.1.3"
 description = "A module for managing feature flags."
 authors = ["Duc Duong <duc.duong@c0x12c.com>"]
 readme = "README.md"
