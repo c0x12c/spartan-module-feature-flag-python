@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "feature_flag_module"
+version = "0.1.0"
+description = "A module for managing feature flags."
+authors = ["Duc Duong <duc.duong@c0x12c.com>"]
+readme = "README.md"
+packages = [{ include = "feature_flag", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+psycopg2-binary = "^2.9.1"
+redis = "^5.0.8"
+orjson = "^3.10.7"
+inflection = "^0.5.1"
+sqlalchemy = "^2.0.32"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+pre-commit = "^2.13.0"
+black = "^21.7b0"
+faker = "^27.0.0"
+fastapi = "^0.68.0"
+requests = "^2.26.0"
+setuptools = "^65.0.0"
+uvicorn = "^0.15.0"
+
+[build-system]
+requires = ["poetry>=1.1.0"]
+build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
