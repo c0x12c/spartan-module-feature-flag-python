@@ -21,7 +21,7 @@ black = ">=21.7,<25.0"
 faker = "^27.0.0"
 fastapi = "^0.68.0"
 requests = "^2.26.0"
-setuptools = "^65.0.0"
+setuptools = ">=65,<74"
 uvicorn = ">=0.15,<0.31"
 
 [build-system]
