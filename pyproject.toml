@@ -17,7 +17,7 @@ sqlalchemy = "^2.0.32"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
 pre-commit = "^2.13.0"
-black = "^21.7b0"
+black = ">=21.7,<25.0"
 faker = "^27.0.0"
 fastapi = "^0.68.0"
 requests = "^2.26.0"
