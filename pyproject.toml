@@ -19,10 +19,10 @@ httpx = "^0.27.0"
 pytest = "^8.3.2"
 pre-commit = ">=2.13,<4.0"
 black = ">=21.7,<25.0"
-faker = "^27.0.0"
+faker = ">=27,<29"
 fastapi = ">=0.68,<0.113"
 requests = "^2.26.0"
-setuptools = ">=65,<74"
+setuptools = ">=65,<75"
 uvicorn = ">=0.15,<0.31"
 
 [build-system]
