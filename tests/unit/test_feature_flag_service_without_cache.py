@@ -62,7 +62,7 @@ class TestFeatureFlagServiceWithoutCache(unittest.IsolatedAsyncioTestCase):
         limit = 10
         skip = 2
         await self.service.list_feature_flags(limit=limit, skip=skip)
-        self.mock_repository.list_feature_flags.assert_called_once_with(limit=limit, skip=skip, entity_class=FeatureFlag)
+        self.mock_repository.list.assert_called_once_with(limit=limit, skip=skip, entity_class=FeatureFlag)
 
     async def test_update_feature_flag(self):
         flag_data = {"name": random_word(), "code": random_word()}
