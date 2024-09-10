@@ -1,29 +1,38 @@
-from feature_flag.core.base_repository import BaseRepository
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from typing import List
+
+from feature_flag.core.base_repository import BaseRepository
 
 
 class PostgresRepository(BaseRepository):
 
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self, session: AsyncSession):
+        self.session = session
 
-    def insert(self, entity) -> str:
+    async def insert(self, entity) -> str:
         table_name = self._get_table_name(type(entity))
+        # Collecting fields that are not excluded from the DB
         fields = [
             field
             for field in entity.__dataclass_fields__.keys()
             if not entity.__dataclass_fields__[field].metadata.get("exclude_from_db")
         ]
+        # Extracting values from the entity for each field
         values = [getattr(entity, field) for field in fields]
 
-        query = f"INSERT INTO {table_name} ({', '.join(fields)}) VALUES ({', '.join(['%s'] * len(fields))}) RETURNING id;"
+        # Constructing the query
+        query = f"INSERT INTO {table_name} ({', '.join(fields)}) VALUES ({', '.join([f':{field}' for field in fields])}) RETURNING id;"
 
-        cursor = self.connection.cursor()
-        cursor.execute(query, values)
-        self.connection.commit()
-        return cursor.fetchone()[0]
+        # Executing the query
+        result = await self.session.execute(text(query), dict(zip(fields, values)))
+        # Committing the transaction
+        await self.session.commit()
 
-    def update(self, entity) -> None:
+        # Returning the id of the newly inserted row
+        return result.scalar()
+
+    async def update(self, entity) -> None:
         table_name = self._get_table_name(type(entity))
         fields = [
             field
@@ -33,39 +42,38 @@ class PostgresRepository(BaseRepository):
         ]
         values = [getattr(entity, field) for field in fields]
 
-        set_clause = ", ".join([f"{field} = %s" for field in fields])
-        query = f"UPDATE {table_name} SET {set_clause} WHERE id = %s;"
+        set_clause = ", ".join([f"{field} = :{field}" for field in fields])
+        query = f"UPDATE {table_name} SET {set_clause} WHERE id = :id;"
 
-        cursor = self.connection.cursor()
-        cursor.execute(query, values + [entity.id])
-        self.connection.commit()
+        await self.session.execute(
+            text(query),
+            {**dict(zip(fields, values)), "id": entity.id}
+        )
+        await self.session.commit()
 
-    def delete(self, entity_id: str, entity_class) -> None:
+    async def delete(self, entity_id: str, entity_class) -> None:
         table_name = self._get_table_name(entity_class)
-        query = f"DELETE FROM {table_name} WHERE id = %s;"
+        query = f"DELETE FROM {table_name} WHERE id = :id;"
 
-        cursor = self.connection.cursor()
-        cursor.execute(query, (entity_id,))
-        self.connection.commit()
+        await self.session.execute(text(query), {"id": entity_id})
+        await self.session.commit()
 
-    def get_by_id(self, entity_id: str, entity_class) -> object:
+    async def get_by_id(self, entity_id: str, entity_class) -> object:
         table_name = self._get_table_name(entity_class)
         fields = [field for field in entity_class.__dataclass_fields__.keys()]
-        query = f"SELECT {', '.join(fields)} FROM {table_name} WHERE id = %s;"
+        query = f"SELECT {', '.join(fields)} FROM {table_name} WHERE id = :id;"
 
-        cursor = self.connection.cursor()
-        cursor.execute(query, (entity_id,))
-        row = cursor.fetchone()
+        result = await self.session.execute(text(query), {"id": entity_id})
+        row = result.fetchone()
         if row:
             return entity_class(**dict(zip(fields, row)))
         return None
 
-    def list_all(self, entity_class) -> List[object]:
+    async def list_all(self, entity_class) -> List[object]:
         table_name = self._get_table_name(entity_class)
         fields = [field for field in entity_class.__dataclass_fields__.keys()]
         query = f"SELECT {', '.join(fields)} FROM {table_name};"
 
-        cursor = self.connection.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
+        result = await self.session.execute(text(query))
+        rows = result.fetchall()
         return [entity_class(**dict(zip(fields, row))) for row in rows]
