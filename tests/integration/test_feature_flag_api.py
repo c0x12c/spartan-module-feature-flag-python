@@ -77,8 +77,9 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
             response_data = response.json()
             flag_id = response_data["id"]
+            code = response_data["code"]
 
-            response = await client.get(f"/api/feature-flags/{flag_id}")
+            response = await client.get(f"/api/feature-flags/{code}")
             self.assertEqual(response.status_code, 200)
 
             response_data = response.json()
@@ -87,6 +88,29 @@ class TestFeatureFlagAPI(unittest.TestCase):
             self.assertEqual(response_data["code"], flag_data["code"])
             self.assertEqual(response_data["description"], flag_data["description"])
             self.assertEqual(response_data["enabled"], flag_data["enabled"])
+
+    def test_list_feature_flags(self):
+        self.loop.run_until_complete(self.async_test_list_feature_flags())
+
+    async def async_test_list_feature_flags(self):
+
+        # Insert directly to simulate existing data
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            for i in range(2):
+                flag_data = {
+                    "name": random_word(),
+                    "code": random_word(),
+                    "description": fake.sentence(),
+                    "enabled": True,
+                }
+                response = await client.post("/api/feature-flags", json=flag_data)
+                self.assertEqual(response.status_code, 200)
+
+            limit = 1
+            offset = 0
+            response = await client.get(f"/api/feature-flags/list", params={"limit": limit, "offset": offset})
+            list_response: list[object] = response.json()
+            assert len(list_response) == limit
 
     def test_enable_flag(self):
         self.loop.run_until_complete(self.async_test_enable_flag())
@@ -104,8 +128,9 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
             response_data = response.json()
             flag_id = response_data["id"]
+            code = response_data["code"]
 
-            response = await client.post(f"/api/feature-flags/{flag_id}/enable")
+            response = await client.post(f"/api/feature-flags/{code}/enable")
             self.assertEqual(response.status_code, 200)
 
     def test_disable_flag(self):
@@ -126,8 +151,9 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
             response_data = response.json()
             flag_id = response_data["id"]
+            code = response_data["code"]
 
-            response = await client.post(f"/api/feature-flags/{flag_id}/disable")
+            response = await client.post(f"/api/feature-flags/{code}/disable")
             self.assertEqual(response.status_code, 200)
 
             response_data = response.json()
