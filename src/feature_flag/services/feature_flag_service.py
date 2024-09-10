@@ -35,11 +35,14 @@ class FeatureFlagService:
                 return cached_flag
 
         flag = await self.repository.get_by_code(code=code, entity_class=FeatureFlag)
+        if isinstance(flag.id, UUID):
+            flag.id = str(flag.id)
 
         if flag and self.cache:
             self.cache.set(key=code, value=flag)
 
         return flag
+
 
     async def list_feature_flags(self, limit: int = 100, skip: int = 0) -> List[FeatureFlag]:
         flags = await self.repository.list(skip=skip, limit=limit, entity_class=FeatureFlag)
