@@ -23,7 +23,11 @@ class BaseRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_all(self, entity_class) -> List[object]:
+    async def get_by_code(self, code: str, entity_class) -> object:
+        pass
+
+    @abstractmethod
+    async def list_feature_flags(self, skip: int, limit: int, entity_class) -> List[object]:
         pass
 
     @staticmethod

@@ -6,7 +6,6 @@ from feature_flag.core.base_repository import BaseRepository
 
 
 class PostgresRepository(BaseRepository):
-
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -69,10 +68,30 @@ class PostgresRepository(BaseRepository):
             return entity_class(**dict(zip(fields, row)))
         return None
 
+    async def get_by_code(self, code: str, entity_class) -> object:
+        table_name = self._get_table_name(entity_class)
+        fields = [field for field in entity_class.__dataclass_fields__.keys()]
+        query = f"SELECT {', '.join(fields)} FROM {table_name} WHERE code = :code;"
+
+        result = await self.session.execute(text(query), {"code": code})
+        row = result.fetchone()
+        if row:
+            return entity_class(**dict(zip(fields, row)))
+        return None
+
     async def list_all(self, entity_class) -> List[object]:
         table_name = self._get_table_name(entity_class)
         fields = [field for field in entity_class.__dataclass_fields__.keys()]
         query = f"SELECT {', '.join(fields)} FROM {table_name};"
+
+        result = await self.session.execute(text(query))
+        rows = result.fetchall()
+        return [entity_class(**dict(zip(fields, row))) for row in rows]
+
+    async def list_feature_flags(self, skip: int, limit: int, entity_class) -> List[object]:
+        table_name = self._get_table_name(entity_class)
+        fields = [field for field in entity_class.__dataclass_fields__.keys()]
+        query = f"SELECT {', '.join(fields)} FROM {table_name} LIMIT {limit} OFFSET {skip};"
 
         result = await self.session.execute(text(query))
         rows = result.fetchall()

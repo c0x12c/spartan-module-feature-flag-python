@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from redis import RedisCluster
@@ -24,27 +24,31 @@ class FeatureFlagService:
             feature_flag.id = str(feature_flag.id)
 
         if self.cache:
-            self.cache.set(key=feature_flag.id, value=feature_flag)
+            self.cache.set(key=feature_flag.code, value=feature_flag)
 
         return feature_flag
 
-    async def get_feature_flag(self, entity_id: str) -> Optional[FeatureFlag]:
+    async def get_feature_flag_by_code(self, code: str) -> Optional[FeatureFlag]:
         if self.cache:
-            cached_flag = self.cache.get(key=entity_id)
+            cached_flag = self.cache.get(key=code)
             if cached_flag:
                 return cached_flag
 
-        flag = await self.repository.get_by_id(entity_id=entity_id, entity_class=FeatureFlag)
+        flag = await self.repository.get_by_code(code=code, entity_class=FeatureFlag)
 
         if flag and self.cache:
-            self.cache.set(key=entity_id, value=flag)
+            self.cache.set(key=code, value=flag)
 
         return flag
 
-    async def update_feature_flag(self, entity_id: str, flag_data: dict):
-        existing_flag = await self.get_feature_flag(entity_id)
+    async def list_feature_flags(self, limit: int = 100, skip: int = 0) -> List[FeatureFlag]:
+        flags = await self.repository.list_feature_flags(skip=skip, limit=limit, entity_class=FeatureFlag)
+        return flags
+
+    async def update_feature_flag(self, code: str, flag_data: dict):
+        existing_flag = await self.get_feature_flag_by_code(code)
         if not existing_flag:
-            raise ValueError(f"Feature flag with ID {entity_id} does not exist.")
+            raise ValueError(f"Feature flag with code {code} does not exist.")
 
         # If existing_flag is a dict, convert it back to FeatureFlag
         if isinstance(existing_flag, dict):
@@ -61,17 +65,18 @@ class FeatureFlagService:
         await self.repository.update(entity=existing_flag)
 
         if self.cache:
-            self.cache.set(key=existing_flag.id, value=existing_flag)
+            self.cache.set(key=existing_flag.code, value=existing_flag)
 
-    async def enable_feature_flag(self, entity_id: str):
+    async def enable_feature_flag(self, code: str):
         flag_data = {"enabled": True}
-        await self.update_feature_flag(entity_id, flag_data)
+        await self.update_feature_flag(code, flag_data)
 
-    async def disable_feature_flag(self, entity_id: str):
+    async def disable_feature_flag(self, code: str):
         flag_data = {"enabled": False}
-        await self.update_feature_flag(entity_id, flag_data)
+        await self.update_feature_flag(code, flag_data)
 
-    async def delete_feature_flag(self, entity_id: str):
-        await self.repository.delete(entity_id=entity_id)
+    async def delete_feature_flag(self, code: str):
+        feature_flag = await self.repository.get_by_code(code, entity_class=FeatureFlag)
+        await self.repository.delete(entity_id=feature_flag.id)
         if self.cache:
-            self.cache.delete(key=entity_id)
+            self.cache.delete(key=feature_flag.code)
