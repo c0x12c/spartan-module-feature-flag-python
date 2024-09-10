@@ -57,3 +57,8 @@ To run the tests, use:
 
 ## Release
 Please follow guidelines in [docs/RELEASE.md](./docs/RELEASE.md)
+
+## Contributors
+
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
