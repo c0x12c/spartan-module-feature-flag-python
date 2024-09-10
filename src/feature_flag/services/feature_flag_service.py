@@ -80,6 +80,6 @@ class FeatureFlagService:
 
     async def delete_feature_flag(self, code: str):
         feature_flag = await self.repository.get_by_code(code, entity_class=FeatureFlag)
-        await self.repository.delete(entity_id=feature_flag.id)
+        await self.repository.delete(entity_id=feature_flag.id, entity_class=FeatureFlag)
         if self.cache:
             self.cache.delete(key=feature_flag.code)
