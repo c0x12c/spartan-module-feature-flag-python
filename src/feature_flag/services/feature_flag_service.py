@@ -42,7 +42,7 @@ class FeatureFlagService:
         return flag
 
     async def list_feature_flags(self, limit: int = 100, skip: int = 0) -> List[FeatureFlag]:
-        flags = await self.repository.list_feature_flags(skip=skip, limit=limit, entity_class=FeatureFlag)
+        flags = await self.repository.list(skip=skip, limit=limit, entity_class=FeatureFlag)
         return flags
 
     async def update_feature_flag(self, code: str, flag_data: dict):

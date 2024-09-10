@@ -27,7 +27,7 @@ class BaseRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_feature_flags(self, skip: int, limit: int, entity_class) -> List[object]:
+    async def list(self, skip: int, limit: int, entity_class) -> List[object]:
         pass
 
     @staticmethod

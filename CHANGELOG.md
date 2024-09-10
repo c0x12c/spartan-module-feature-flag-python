@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- First release with CRUD operations for feature flags
-- Use AsyncSession for database connection and Redis Cluster
 - Updating enable / disable, update, get based on the code instead of id
 - List feature flags based on the offset and skip
+
+## [0.2.0]
+
+### Added
+
+- First release with CRUD operations for feature flags
+- Use AsyncSession for database connection and Redis Cluster

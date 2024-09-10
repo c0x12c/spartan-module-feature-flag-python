@@ -88,7 +88,7 @@ class PostgresRepository(BaseRepository):
         rows = result.fetchall()
         return [entity_class(**dict(zip(fields, row))) for row in rows]
 
-    async def list_feature_flags(self, skip: int, limit: int, entity_class) -> List[object]:
+    async def list(self, skip: int, limit: int, entity_class) -> List[object]:
         table_name = self._get_table_name(entity_class)
         fields = [field for field in entity_class.__dataclass_fields__.keys()]
         query = f"SELECT {', '.join(fields)} FROM {table_name} LIMIT {limit} OFFSET {skip};"
