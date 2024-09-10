@@ -7,23 +7,23 @@ import inflection
 class BaseRepository(ABC):
 
     @abstractmethod
-    def insert(self, entity) -> str:
+    async def insert(self, entity) -> str:
         pass
 
     @abstractmethod
-    def update(self, entity) -> None:
+    async def update(self, entity) -> None:
         pass
 
     @abstractmethod
-    def delete(self, entity_id: str, entity_class) -> None:
+    async def delete(self, entity_id: str, entity_class) -> None:
         pass
 
     @abstractmethod
-    def get_by_id(self, entity_id: str, entity_class) -> object:
+    async def get_by_id(self, entity_id: str, entity_class) -> object:
         pass
 
     @abstractmethod
-    def list_all(self, entity_class) -> List[object]:
+    async def list_all(self, entity_class) -> List[object]:
         pass
 
     @staticmethod

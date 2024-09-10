@@ -9,3 +9,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - First release with CRUD operations for feature flags
+- Use AsyncSession for database connection and Redis Cluster
