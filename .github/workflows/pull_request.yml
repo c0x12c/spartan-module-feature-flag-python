@@ -26,11 +26,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
-      redis:
-        image: redis:6
-        ports:
-          - 6379:6379
-        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
 
     steps:
       - name: Checkout code
@@ -40,6 +36,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
+
+      - name: Run Redis cluster
+        uses: vishnudxb/redis-cluster@1.0.5
+        with:
+          master1-port: 30001
+          master2-port: 30002
+          master3-port: 30003
+          slave1-port: 30004
+          slave2-port: 30005
+          slave3-port: 30006
 
       - name: Install dependencies
         run: |
