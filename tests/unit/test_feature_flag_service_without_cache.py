@@ -73,7 +73,7 @@ class TestFeatureFlagServiceWithoutCache(unittest.IsolatedAsyncioTestCase):
         feature_flag = FeatureFlag(id=str(uuid.uuid4()), name=random_word(), code=random_word())
         self.mock_repository.get_by_code.return_value = feature_flag
         await self.service.delete_feature_flag(feature_flag.code)
-        self.mock_repository.delete.assert_called_once_with(entity_id=feature_flag.id)
+        self.mock_repository.delete.assert_called_once_with(entity_id=feature_flag.id, entity_class=FeatureFlag)
 
 
 if __name__ == "__main__":

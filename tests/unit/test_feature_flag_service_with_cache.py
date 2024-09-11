@@ -91,7 +91,7 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
         exists_flag = FeatureFlag(id=str(uuid.uuid4()), code=random_word(), name=random_word())
         self.mock_repository.get_by_code.return_value = exists_flag
         await self.service.delete_feature_flag(code=exists_flag.code)
-        self.mock_repository.delete.assert_called_once_with(entity_id=exists_flag.id)
+        self.mock_repository.delete.assert_called_once_with(entity_id=exists_flag.id, entity_class=FeatureFlag)
         self.mock_cache.delete.assert_called_once_with(key=exists_flag.code)
 
 
