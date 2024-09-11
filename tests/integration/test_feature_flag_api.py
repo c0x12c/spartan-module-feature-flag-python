@@ -2,11 +2,8 @@ import asyncio
 import unittest
 import uuid
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
 
 from faker import Faker
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,9 +19,12 @@ from tests.test_utils import (
 
 fake = Faker()
 
+
 class TestFeatureFlagAPI(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
+
         # Check if redis_connection is not already set
         cls.redis_connection = get_redis_connection()
         # Initialize event loop and session at the class level
@@ -36,7 +36,6 @@ class TestFeatureFlagAPI(unittest.TestCase):
         async with cls._get_async_session() as session:
             cls.session = session
             await setup_database(session=session)
-
 
     @classmethod
     def tearDownClass(cls):
@@ -200,6 +199,7 @@ class TestFeatureFlagAPI(unittest.TestCase):
             yield session
         finally:
             await session.close()  # Close the session after usage
+
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ db_connection = psycopg2.connect(
     host="localhost",
     port="5432"
 )
-repository = PostgresRepository(connection=db_connection)
+repository = PostgresRepository[FeatureFlag](connection=db_connection)
 
 # Redis connection setup
 redis_connection = redis.Redis(host='localhost', port=6379, db=0)
