@@ -67,9 +67,9 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
 
     async def test_get_feature_flag(self):
         flag_data = FeatureFlag(
-            id=str(uuid.uuid4()), name=random_word(), code=random_word()
+            id=str(uuid.uuid4()), name=random_word(), code=random_word(), enabled=True
         )
-        self.mock_cache.get.return_value = flag_data
+        self.mock_cache.get.return_value = flag_data.__dict__
         result = await self.service.get_feature_flag_by_code(code=flag_data.code)
         self.assertEqual(result, flag_data)
         self.mock_cache.get.assert_called_once_with(key=flag_data.code)
@@ -82,7 +82,11 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
         self.mock_repository.list.assert_called_once_with(limit=limit, skip=skip, entity_class=FeatureFlag)
 
     async def test_update_feature_flag(self):
-        flag_data = {"name": random_word(), "code": random_word()}
+        flag_data = FeatureFlag(
+            id=str(uuid.uuid4()), name=random_word(), code=random_word(), enabled=True
+        )
+        self.mock_cache.get.return_value = flag_data.__dict__
+        flag_data = {"name": random_word(), "code": flag_data.code, 'enabled': False}
         await self.service.update_feature_flag(code=flag_data['code'], flag_data=flag_data)
         self.mock_repository.update.assert_called_once()
         self.mock_cache.set.assert_called_once()
@@ -91,7 +95,7 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
         exists_flag = FeatureFlag(id=str(uuid.uuid4()), code=random_word(), name=random_word())
         self.mock_repository.get_by_code.return_value = exists_flag
         await self.service.delete_feature_flag(code=exists_flag.code)
-        self.mock_repository.delete.assert_called_once_with(entity_id=exists_flag.id)
+        self.mock_repository.delete.assert_called_once_with(entity_id=exists_flag.id, entity_class=FeatureFlag)
         self.mock_cache.delete.assert_called_once_with(key=exists_flag.code)
 
 

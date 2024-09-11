@@ -30,11 +30,13 @@ class FeatureFlagService:
 
     async def get_feature_flag_by_code(self, code: str) -> Optional[FeatureFlag]:
         if self.cache:
-            cached_flag = self.cache.get(key=code)
+            cached_flag: dict = self.cache.get(key=code)
             if cached_flag:
-                return cached_flag
+                return FeatureFlag(**cached_flag)
 
         flag = await self.repository.get_by_code(code=code, entity_class=FeatureFlag)
+        if isinstance(flag.id, UUID):
+            flag.id = str(flag.id)
 
         if flag and self.cache:
             self.cache.set(key=code, value=flag)
@@ -77,6 +79,6 @@ class FeatureFlagService:
 
     async def delete_feature_flag(self, code: str):
         feature_flag = await self.repository.get_by_code(code, entity_class=FeatureFlag)
-        await self.repository.delete(entity_id=feature_flag.id)
+        await self.repository.delete(entity_id=feature_flag.id, entity_class=FeatureFlag)
         if self.cache:
             self.cache.delete(key=feature_flag.code)

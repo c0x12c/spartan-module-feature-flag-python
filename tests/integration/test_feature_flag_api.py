@@ -19,6 +19,7 @@ from tests.test_utils import (
     session_factory,
 )
 
+
 fake = Faker()
 
 class TestFeatureFlagAPI(unittest.TestCase):
@@ -79,6 +80,36 @@ class TestFeatureFlagAPI(unittest.TestCase):
             flag_id = response_data["id"]
             code = response_data["code"]
 
+            response = await client.get(f"/api/feature-flags/{code}")
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            self.assertEqual(response_data["id"], flag_id)
+            self.assertEqual(response_data["name"], flag_data["name"])
+            self.assertEqual(response_data["code"], flag_data["code"])
+            self.assertEqual(response_data["description"], flag_data["description"])
+            self.assertEqual(response_data["enabled"], flag_data["enabled"])
+
+    def test_get_flag_via_repository(self):
+        self.loop.run_until_complete(self.async_test_get_flag())
+
+    async def async_test_get_flag_via_repository(self):
+        flag_data = {
+            "name": random_word(),
+            "code": random_word(),
+            "description": fake.sentence(),
+            "enabled": True,
+        }
+        # Insert directly to simulate existing data
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post("/api/feature-flags", json=flag_data)
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            flag_id = response_data["id"]
+            code = response_data["code"]
+
+            self.redis_connection.delete(f'feature-flag:{code}')
             response = await client.get(f"/api/feature-flags/{code}")
             self.assertEqual(response.status_code, 200)
 
