@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Refactored and optimized PostgresRepository, FeatureFlagService, and BaseRepository.
+- Implemented proper type hinting across all components.
+- Enhanced error handling and logging mechanisms.
+
 ## [0.3.1]
 
 ### Added
