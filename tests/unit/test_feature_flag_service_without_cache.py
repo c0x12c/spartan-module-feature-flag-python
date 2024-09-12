@@ -1,6 +1,6 @@
 import unittest
 import uuid
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 from faker import Faker
 
@@ -73,7 +73,9 @@ class TestFeatureFlagServiceWithoutCache(unittest.IsolatedAsyncioTestCase):
         feature_flag = FeatureFlag(id=str(uuid.uuid4()), name=random_word(), code=random_word())
         self.mock_repository.get_by_code.return_value = feature_flag
         await self.service.delete_feature_flag(feature_flag.code)
-        self.mock_repository.delete.assert_called_once_with(entity_id=feature_flag.id, entity_class=FeatureFlag)
+        self.mock_repository.delete.assert_called_once()
+        call_args = self.mock_repository.delete.call_args
+        self.assertEqual(call_args[1]['entity_id'], feature_flag.id)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,6 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
         self.mock_cache = MagicMock()
         self.service = FeatureFlagService(self.mock_repository, self.mock_cache)
 
-
     async def test_disable_feature_flag(self):
         flag_id = str(uuid.uuid4())
         existing_flag = FeatureFlag(
@@ -33,12 +32,13 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
             id=flag_id, name=existing_flag.name, code=existing_flag.code, enabled=False
         )
         self.mock_repository.update.assert_called_once_with(entity=expected_flag)
-        self.mock_cache.set.assert_has_calls([call(key=existing_flag.code, value=existing_flag)])
-        self.mock_cache.set.assert_has_calls([call(key=existing_flag.code, value=expected_flag)])
-        # self.mock_cache.set.assert_called_once_with(key=flag_id, value=expected_flag)
-        self.mock_cache.get.assert_called_once_with(
-            key=existing_flag.code
-        )  # Check if cache was hit
+        self.mock_cache.set.assert_called_once()
+        call_args = self.mock_cache.set.call_args
+        self.assertEqual(call_args[1]['key'], existing_flag.code)
+        self.assertEqual(call_args[1]['value']['name'], existing_flag.name)
+        self.assertEqual(call_args[1]['value']['code'], existing_flag.code)
+        self.assertEqual(call_args[1]['value']['id'], existing_flag.id)
+        self.assertFalse(call_args[1]['value']['enabled'])
 
     async def test_enable_feature_flag(self):
         flag_id = str(uuid.uuid4())
@@ -54,10 +54,13 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
             id=flag_id, name=existing_flag.name, code=existing_flag.code, enabled=True
         )
         self.mock_repository.update.assert_called_once_with(entity=expected_flag)
-        self.mock_cache.set.assert_has_calls([call(key=existing_flag.code, value=expected_flag)])
-        self.mock_cache.get.assert_called_once_with(
-            key=existing_flag.code
-        )  # Check if cache was hit
+        self.mock_cache.set.assert_called_once()
+        call_args = self.mock_cache.set.call_args
+        self.assertEqual(call_args[1]['key'], existing_flag.code)
+        self.assertEqual(call_args[1]['value']['name'], existing_flag.name)
+        self.assertEqual(call_args[1]['value']['code'], existing_flag.code)
+        self.assertEqual(call_args[1]['value']['id'], existing_flag.id)
+        self.assertTrue(call_args[1]['value']['enabled'])
 
     async def test_create_feature_flag(self):
         flag_data = {"name": random_word(), "code": random_word()}

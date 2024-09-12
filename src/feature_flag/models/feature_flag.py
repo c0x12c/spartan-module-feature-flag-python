@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from feature_flag.core.decorators import table_name
 
@@ -13,7 +13,7 @@ class FeatureFlag:
     id: Optional[str] = field(default=None, metadata={"exclude_from_db": True})
     description: Optional[str] = None
     enabled: bool = False
-    metadata: Optional[dict] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     created_at: Optional[datetime] = field(
         default=None, metadata={"exclude_from_db": True}

@@ -25,8 +25,12 @@ CREATE TABLE IF NOT EXISTS public.feature_flags (
     updated_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TRIGGER update_feature_flag_updated_at
-    BEFORE UPDATE
-    ON feature_flags
-    FOR EACH ROW
-    EXECUTE PROCEDURE update_updated_at();
+DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_feature_flag_updated_at') THEN
+            CREATE TRIGGER update_feature_flag_updated_at
+                BEFORE UPDATE ON feature_flags
+                FOR EACH ROW
+            EXECUTE PROCEDURE update_updated_at();
+    END IF;
+END $$;
