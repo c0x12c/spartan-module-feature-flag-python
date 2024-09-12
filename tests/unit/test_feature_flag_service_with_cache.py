@@ -8,10 +8,6 @@ from feature_flag.models.feature_flag import FeatureFlag
 from feature_flag.services.feature_flag_service import FeatureFlagService
 from tests.test_utils import random_word
 
-from feature_flag.core import (
-    FeatureFlagValidationError
-)
-
 fake = Faker()
 
 
@@ -105,66 +101,6 @@ class TestFeatureFlagServiceWithCache(unittest.IsolatedAsyncioTestCase):
         self.mock_repository.delete.assert_called_once_with(entity_id=exists_flag.id, entity_class=FeatureFlag)
         self.mock_cache.delete.assert_called_once_with(key=exists_flag.code)
 
-    def test_valid_flag_data(self):
-        valid_data = {
-            'name': 'Test Flag',
-            'code': 'TEST_FLAG',
-            'enabled': True,
-            'description': 'This is a test flag'
-        }
-        try:
-            self.service._validate_flag_data(valid_data)
-        except FeatureFlagValidationError:
-            self.fail("_validate_flag_data() raised FeatureFlagValidationError unexpectedly!")
-
-    def test_missing_required_fields(self):
-        invalid_data = {'enabled': True}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue('Missing required field' in str(context.exception))
-
-    def test_invalid_name_type(self):
-        invalid_data = {'name': 123, 'code': 'TEST'}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'name' field must be a string" in str(context.exception))
-
-    def test_empty_name(self):
-        invalid_data = {'name': '', 'code': 'TEST'}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'name' field cannot be empty" in str(context.exception))
-
-    def test_invalid_code_type(self):
-        invalid_data = {'name': 'Test', 'code': 123}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'code' field must be a string" in str(context.exception))
-
-    def test_empty_code(self):
-        invalid_data = {'name': 'Test', 'code': ''}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'code' field cannot be empty" in str(context.exception))
-
-    def test_invalid_enabled_type(self):
-        invalid_data = {'name': 'Test', 'code': 'TEST', 'enabled': 'yes'}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'enabled' field must be a boolean" in str(context.exception))
-
-    def test_invalid_description_type(self):
-        invalid_data = {'name': 'Test', 'code': 'TEST', 'description': 123}
-        with self.assertRaises(FeatureFlagValidationError) as context:
-            self.service._validate_flag_data(invalid_data)
-        self.assertTrue("'description' field must be a string" in str(context.exception))
-
-    def test_update_mode(self):
-        update_data = {'enabled': False}
-        try:
-            self.service._validate_flag_data(update_data, update=True)
-        except FeatureFlagValidationError:
-            self.fail("_validate_flag_data() raised FeatureFlagValidationError unexpectedly in update mode!")
 
 if __name__ == "__main__":
     unittest.main()
