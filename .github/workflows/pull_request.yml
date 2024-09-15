@@ -33,12 +33,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Run Redis cluster
-        uses: vishnudxb/redis-cluster@1.0.5
+        uses: vishnudxb/redis-cluster@1.0.9
         with:
           master1-port: 30001
           master2-port: 30002
