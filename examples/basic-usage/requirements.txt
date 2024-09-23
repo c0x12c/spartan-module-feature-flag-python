@@ -1,3 +1,5 @@
+asyncpg
+greenlet
 fastapi
 psycopg2
 redis

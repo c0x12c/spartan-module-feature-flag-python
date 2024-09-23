@@ -18,8 +18,10 @@ class PostgresRepository(BaseRepository[T]):
         ]
         values = [getattr(entity, field) for field in fields]
 
-        query = (f"INSERT INTO {table_name} ({', '.join(fields)})"
-                 f" VALUES ({', '.join([f':{field}' for field in fields])}) RETURNING id;")
+        query = (
+            f"INSERT INTO {table_name} ({', '.join(fields)})"
+            f" VALUES ({', '.join([f':{field}' for field in fields])}) RETURNING id;"
+        )
 
         result = await self.session.execute(text(query), dict(zip(fields, values)))
         return result.scalar()
@@ -29,7 +31,8 @@ class PostgresRepository(BaseRepository[T]):
         fields = [
             field
             for field in entity.__dataclass_fields__.keys()
-            if field != "id" and not entity.__dataclass_fields__[field].metadata.get("exclude_from_db")
+            if field != "id"
+            and not entity.__dataclass_fields__[field].metadata.get("exclude_from_db")
         ]
         values = [getattr(entity, field) for field in fields]
 
@@ -37,8 +40,7 @@ class PostgresRepository(BaseRepository[T]):
         query = f"UPDATE {table_name} SET {set_clause} WHERE id = :id;"
 
         await self.session.execute(
-            text(query),
-            {**dict(zip(fields, values)), "id": entity.id}
+            text(query), {**dict(zip(fields, values)), "id": entity.id}
         )
 
     async def delete(self, entity_id: str, entity_class: Type[T]) -> None:
@@ -81,7 +83,9 @@ class PostgresRepository(BaseRepository[T]):
     async def list(self, skip: int, limit: int, entity_class: Type[T]) -> List[T]:
         table_name = self._get_table_name(entity_class)
         fields = [field for field in entity_class.__dataclass_fields__.keys()]
-        query = f"SELECT {', '.join(fields)} FROM {table_name} LIMIT {limit} OFFSET {skip};"
+        query = (
+            f"SELECT {', '.join(fields)} FROM {table_name} LIMIT {limit} OFFSET {skip};"
+        )
 
         result = await self.session.execute(text(query))
         rows = result.fetchall()

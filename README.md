@@ -6,6 +6,7 @@ This module provides a flexible and standardized way to manage feature flags in 
 - **CRUD Operations**: Create, read, update, and delete feature flags.
 - **Database Support**: PostgreSQL integration.
 - **Optional Redis Caching**: Cache feature flag data for faster access. Redis integration is optional and can be omitted.
+- **Optional Slack Notifier**: Send notification to a Slack channel.
 
 ## Installation
 To install the module and its dependencies, use:
