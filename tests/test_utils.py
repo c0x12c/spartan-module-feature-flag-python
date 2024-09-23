@@ -55,7 +55,7 @@ def get_redis_connection():
 
 mock_slack_notifier = MagicMock(
     wraps=SlackNotifier(
-        slack_webhook_url="xxx", included_statuses=[ChangeStatus.ENABLED]
+        slack_webhook_url="xxx", excluded_statuses=[ChangeStatus.ENABLED]
     )
 )
 

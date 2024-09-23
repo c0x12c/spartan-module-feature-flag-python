@@ -1,4 +1,4 @@
-from tkinter.constants import DISABLEDfrom feature_flag.notification.actions import ChangeStatusfrom feature_flag.notification.actions import ChangeStatus
+from tkinter.constants import DISABLEDfrom tkinter.constants import DISABLEDfrom feature_flag.notification.actions import ChangeStatusfrom feature_flag.notification.actions import ChangeStatus
 
 # spartan-module-feature-flag
 
@@ -25,14 +25,14 @@ In the [`examples/basic-usage`](./examples/basic-usage) directory, you will find
 
 - Attributes
   - `webhook_url`: This attribute stores the Slack webhook URL used to send messages to the specified Slack channel.
-  - `included_statuses`: This attribute is a list that specifies which status changes should trigger notifications to the Slack channel.
+  - `excluded_statuses`: This attribute is a list that specifies which status changes should not trigger notifications to the Slack channel.
     - If set to `None`, all status changes will trigger notifications.
 
 - Sample Code
   ```python
    slack_notifier = SlackNotifier(
        webhook_url='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
-       included_statuses=[ChangeStatus.ENABLED, ChangeStatus,DISABLED]
+       excluded_statuses=[ChangeStatus.DELETED, ChangeStatus,DISABLED]
    )
   ```
 

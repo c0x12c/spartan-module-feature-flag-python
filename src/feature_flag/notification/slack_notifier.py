@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 class SlackNotifier(Notifier):
     def __init__(
-        self, slack_webhook_url: str, included_statuses: list[ChangeStatus] = None
+        self, slack_webhook_url: str, excluded_statuses: list[ChangeStatus] = None
     ):
         self.slack_webhook_url = slack_webhook_url
-        self.included_statuses = included_statuses
+        self.excluded_statuses = excluded_statuses
 
     def send(self, feature_flag: FeatureFlag, change_status: ChangeStatus):
         """
@@ -31,7 +31,7 @@ class SlackNotifier(Notifier):
         """
 
         try:
-            if self.included_statuses and change_status not in self.included_statuses:
+            if self.excluded_statuses and change_status in self.excluded_statuses:
                 return
 
             message = self._build_message(feature_flag, change_status)
