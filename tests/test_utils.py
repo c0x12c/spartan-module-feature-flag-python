@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
+from feature_flag.notification.actions import ChangeStatus
 from feature_flag.notification.slack_notifier import SlackNotifier
 
 fake = Faker()
@@ -52,21 +53,17 @@ def get_redis_connection():
     return RedisCluster.from_url(url=f"redis://localhost:30001", decode_responses=True)
 
 
-mock_slack_notifier = MagicMock(spec=SlackNotifier)
+mock_slack_notifier = MagicMock(
+    wraps=SlackNotifier(
+        slack_webhook_url="xxx", included_statuses=[ChangeStatus.ENABLED]
+    )
+)
 
 
 def get_slack_notifier():
     global mock_slack_notifier
-    if mock_slack_notifier is None:
-        mock_slack_notifier.send = MagicMock()
+    mock_slack_notifier.send = MagicMock(name="send")
     return mock_slack_notifier
-
-
-def reset_slack_notifier():
-    global mock_slack_notifier
-    if mock_slack_notifier is None:
-        return
-    mock_slack_notifier.reset_mock()
 
 
 async def setup_database(session: AsyncSession, sql_file="setup.sql"):

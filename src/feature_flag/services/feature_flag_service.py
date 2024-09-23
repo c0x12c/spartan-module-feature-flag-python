@@ -139,6 +139,8 @@ class FeatureFlagService:
 
             await self.repository.update(entity=existing_flag)
             self._update_cache(existing_flag)
+            if self.notifier:
+                self.notifier.send(existing_flag, ChangeStatus.UPDATED)
             return existing_flag
         except FeatureFlagNotFoundError:
             raise
@@ -169,6 +171,8 @@ class FeatureFlagService:
             )
             if self.cache:
                 self.cache.delete(key=code)
+            if self.notifier:
+                self.notifier.send(feature_flag, ChangeStatus.DELETED)
         except FeatureFlagNotFoundError:
             raise
         except Exception as e:

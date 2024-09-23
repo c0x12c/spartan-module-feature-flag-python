@@ -11,8 +11,11 @@ logger = logging.getLogger(__name__)
 
 
 class SlackNotifier(Notifier):
-    def __init__(self, slack_webhook_url: str):
+    def __init__(
+        self, slack_webhook_url: str, included_statuses: list[ChangeStatus] = None
+    ):
         self.slack_webhook_url = slack_webhook_url
+        self.included_statuses = included_statuses
 
     def send(self, feature_flag: FeatureFlag, change_status: ChangeStatus):
         """
@@ -28,12 +31,19 @@ class SlackNotifier(Notifier):
         """
 
         try:
+            if self.included_statuses and change_status not in self.included_statuses:
+                return
+
             message = self._build_message(feature_flag, change_status)
             payload = {"text": message}
-            response = requests.post(self.slack_webhook_url, json=payload)
-            response.raise_for_status()
+            print(f"Sending notification: {message}")
+            self._perform_send(payload=payload)
         except requests.exceptions.HTTPError as e:
             raise NotifierError(f"Error sending Slack notification: {e}") from e
+
+    def _perform_send(self, payload: dict):
+        response = requests.post(self.slack_webhook_url, json=payload)
+        response.raise_for_status()
 
     @staticmethod
     def _build_message(feature_flag: FeatureFlag, change_status: ChangeStatus) -> str:

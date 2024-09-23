@@ -26,7 +26,6 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
         # Check if redis_connection is not already set
         cls.redis_connection = get_redis_connection()
         # Initialize event loop and session at the class level
@@ -149,6 +148,28 @@ class TestFeatureFlagAPI(unittest.TestCase):
             )
             list_response: list[object] = response.json()
             assert len(list_response) == limit
+
+    def test_delete_flag(self):
+        self.loop.run_until_complete(self.async_test_delete_flag())
+
+    async def async_test_delete_flag(self):
+        flag_data = {
+            "name": random_word(),
+            "code": random_word(),
+            "description": fake.sentence(),
+            "enabled": False,
+        }
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post("/api/feature-flags", json=flag_data)
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            code = response_data["code"]
+
+            response = await client.delete(f"/api/feature-flags/{code}")
+            self.assertEqual(response.status_code, 200)
+
+            self.notifier.send.assert_called_once_with(ANY, ChangeStatus.DELETED)
 
     def test_enable_flag(self):
         self.loop.run_until_complete(self.async_test_enable_flag())
