@@ -38,6 +38,7 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info("Creating feature flag with data: %s", flag_data)
             feature_flag = FeatureFlag(**flag_data)
             entity_id = await self.repository.insert(entity=feature_flag)
             feature_flag = await self.repository.get_by_id(
@@ -49,6 +50,9 @@ class FeatureFlagService:
                 else feature_flag.id
             )
             self._update_cache(feature_flag)
+            logger.info(
+                "Feature flag created successfully with ID: %s", feature_flag.id
+            )
             return feature_flag
         except Exception as e:
             raise FeatureFlagError(f"Failed to create feature flag: {str(e)}") from e
@@ -69,6 +73,7 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info("Fetching feature flag by code: %s", code)
             flag = await self._fetch_feature_flag_by_code(code=code)
             if not flag:
                 raise FeatureFlagNotFoundError(
@@ -77,6 +82,7 @@ class FeatureFlagService:
 
             flag.id = str(flag.id) if isinstance(flag.id, UUID) else flag.id
             self._update_cache(flag)
+            logger.info("Feature flag fetched successfully with code: %s", code)
             return flag
         except FeatureFlagNotFoundError:
             raise
@@ -125,6 +131,9 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info(
+                "Updating feature flag with code: %s and data: %s", code, flag_data
+            )
             existing_flag = await self._fetch_feature_flag_by_code(code=code)
             if not existing_flag:
                 raise FeatureFlagNotFoundError(
@@ -138,6 +147,7 @@ class FeatureFlagService:
             self._update_cache(existing_flag)
             if self.notifier:
                 self.notifier.send(existing_flag, ChangeStatus.UPDATED)
+            logger.info("Feature flag with code %s updated successfully", code)
             return existing_flag
         except FeatureFlagNotFoundError:
             raise
@@ -156,6 +166,7 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info("Deleting feature flag with code: %s", code)
             feature_flag = await self._fetch_feature_flag_by_code(code=code)
             if not feature_flag:
                 raise FeatureFlagNotFoundError(
@@ -169,6 +180,7 @@ class FeatureFlagService:
                 self.cache.delete(key=code)
             if self.notifier:
                 self.notifier.send(feature_flag, ChangeStatus.DELETED)
+            logger.info("Feature flag with code %s deleted successfully", code)
         except FeatureFlagNotFoundError:
             raise
         except Exception as e:
@@ -189,11 +201,14 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info("Enabling feature flag with code: %s", code)
             feature_flag = await self._set_feature_flag_state(code, True)
             if self.notifier:
                 self.notifier.send(feature_flag, ChangeStatus.ENABLED)
+            logger.info("Feature flag with code %s enabled successfully", code)
             return feature_flag
         except FeatureFlagNotFoundError:
+            # Exception is re-raised; no need to log the error here
             raise
         except Exception as e:
             raise FeatureFlagError(f"Failed to enable feature flag: {str(e)}") from e
@@ -213,9 +228,11 @@ class FeatureFlagService:
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
         try:
+            logger.info("Disabling feature flag with code: %s", code)
             feature_flag = await self._set_feature_flag_state(code, False)
             if self.notifier:
                 self.notifier.send(feature_flag, ChangeStatus.DISABLED)
+            logger.info("Feature flag with code %s disabled successfully", code)
             return feature_flag
         except FeatureFlagNotFoundError:
             raise
