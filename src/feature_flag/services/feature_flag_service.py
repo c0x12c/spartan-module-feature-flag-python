@@ -51,7 +51,6 @@ class FeatureFlagService:
             self._update_cache(feature_flag)
             return feature_flag
         except Exception as e:
-            logger.error(f"Error creating feature flag: {str(e)}")
             raise FeatureFlagError(f"Failed to create feature flag: {str(e)}") from e
 
     async def get_feature_flag_by_code(self, code: str) -> FeatureFlag:
@@ -82,8 +81,7 @@ class FeatureFlagService:
         except FeatureFlagNotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error fetching feature flag {code}: {str(e)}")
-            raise FeatureFlagError(f"Failed to fetch feature flag: {str(e)}")
+            raise FeatureFlagError(f"Failed to fetch feature flag: {str(e)}") from e
 
     async def list_feature_flags(
         self, limit: int = 100, skip: int = 0
@@ -106,8 +104,7 @@ class FeatureFlagService:
                 skip=skip, limit=limit, entity_class=FeatureFlag
             )
         except Exception as e:
-            logger.error(f"Error listing feature flags: {str(e)}")
-            raise FeatureFlagError(f"Failed to list feature flags: {str(e)}")
+            raise FeatureFlagError(f"Failed to list feature flags: {str(e)}") from e
 
     async def update_feature_flag(
         self, code: str, flag_data: Dict[str, Any]
@@ -145,8 +142,7 @@ class FeatureFlagService:
         except FeatureFlagNotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error updating feature flag {code}: {str(e)}")
-            raise FeatureFlagError(f"Failed to update feature flag: {str(e)}")
+            raise FeatureFlagError(f"Failed to update feature flag: {str(e)}") from e
 
     async def delete_feature_flag(self, code: str) -> None:
         """
@@ -176,8 +172,7 @@ class FeatureFlagService:
         except FeatureFlagNotFoundError:
             raise
         except Exception as e:
-            logger.error(f"Error deleting feature flag {code}: {str(e)}")
-            raise FeatureFlagError(f"Failed to delete feature flag: {str(e)}")
+            raise FeatureFlagError(f"Failed to delete feature flag: {str(e)}") from e
 
     async def enable_feature_flag(self, code: str) -> FeatureFlag:
         """
@@ -193,10 +188,15 @@ class FeatureFlagService:
             FeatureFlagNotFoundError: If the feature flag is not found.
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
-        feature_flag = await self._set_feature_flag_state(code, True)
-        if self.notifier:
-            self.notifier.send(feature_flag, ChangeStatus.ENABLED)
-        return feature_flag
+        try:
+            feature_flag = await self._set_feature_flag_state(code, True)
+            if self.notifier:
+                self.notifier.send(feature_flag, ChangeStatus.ENABLED)
+            return feature_flag
+        except FeatureFlagNotFoundError:
+            raise
+        except Exception as e:
+            raise FeatureFlagError(f"Failed to enable feature flag: {str(e)}") from e
 
     async def disable_feature_flag(self, code: str) -> FeatureFlag:
         """
@@ -212,10 +212,15 @@ class FeatureFlagService:
             FeatureFlagNotFoundError: If the feature flag is not found.
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
-        feature_flag = await self._set_feature_flag_state(code, False)
-        if self.notifier:
-            self.notifier.send(feature_flag, ChangeStatus.DISABLED)
-        return feature_flag
+        try:
+            feature_flag = await self._set_feature_flag_state(code, False)
+            if self.notifier:
+                self.notifier.send(feature_flag, ChangeStatus.DISABLED)
+            return feature_flag
+        except FeatureFlagNotFoundError:
+            raise
+        except Exception as e:
+            raise FeatureFlagError(f"Failed to disable feature flag: {str(e)}") from e
 
     async def _set_feature_flag_state(self, code: str, state: bool) -> FeatureFlag:
         """
@@ -232,28 +237,14 @@ class FeatureFlagService:
             FeatureFlagNotFoundError: If the feature flag is not found.
             FeatureFlagDatabaseError: If there's an error in database operation.
         """
-        try:
-            feature_flag = await self.repository.get_by_code(
-                code, entity_class=FeatureFlag
-            )
-            if not feature_flag:
-                raise FeatureFlagNotFoundError(
-                    f"Feature flag with code {code} not found"
-                )
+        feature_flag = await self._fetch_feature_flag_by_code(code=code)
+        if not feature_flag:
+            raise FeatureFlagNotFoundError(f"Feature flag with code {code} not found")
 
-            feature_flag.enabled = state
-            await self.repository.update(entity=feature_flag)
-            self._update_cache(feature_flag)
-            return feature_flag
-        except FeatureFlagNotFoundError:
-            raise
-        except Exception as e:
-            logger.error(
-                f"Error {'enabling' if state else 'disabling'} feature flag {code}: {str(e)}"
-            )
-            raise FeatureFlagError(
-                f"Failed to {'enable' if state else 'disable'} feature flag: {str(e)}"
-            )
+        feature_flag.enabled = state
+        await self.repository.update(entity=feature_flag)
+        self._update_cache(feature_flag)
+        return feature_flag
 
     async def _fetch_feature_flag_by_code(self, code: str):
         if self.cache:
@@ -265,7 +256,7 @@ class FeatureFlagService:
                     else cached_flag
                 )
 
-        return self.repository.get_by_code(code=code, entity_class=FeatureFlag)
+        return await self.repository.get_by_code(code=code, entity_class=FeatureFlag)
 
     def _update_cache(self, feature_flag: FeatureFlag) -> None:
         """
@@ -278,9 +269,4 @@ class FeatureFlagService:
             FeatureFlagCacheError: If there's an error in cache operation.
         """
         if self.cache:
-            try:
-                self.cache.set(key=feature_flag.code, value=feature_flag.__dict__)
-            except Exception as e:
-                logger.error(
-                    f"Error updating cache for feature flag {feature_flag.code}: {str(e)}"
-                )
+            self.cache.set(key=feature_flag.code, value=feature_flag.__dict__)
