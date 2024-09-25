@@ -2,11 +2,13 @@ import asyncio
 import unittest
 import uuid
 from contextlib import asynccontextmanager
+from unittest.mock import ANY
 
 from faker import Faker
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from feature_flag.notification.actions import ChangeStatus
 from tests.test_app import app
 from tests.test_utils import (
     get_redis_connection,
@@ -14,8 +16,8 @@ from tests.test_utils import (
     teardown_database,
     random_word,
     session_factory,
+    get_slack_notifier,
 )
-
 
 fake = Faker()
 
@@ -24,12 +26,12 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
         # Check if redis_connection is not already set
         cls.redis_connection = get_redis_connection()
         # Initialize event loop and session at the class level
         cls.loop = asyncio.get_event_loop()
         cls.loop.run_until_complete(cls.setUpDatabase())
+        cls.notifier = get_slack_notifier()
 
     @classmethod
     async def setUpDatabase(cls):
@@ -40,6 +42,9 @@ class TestFeatureFlagAPI(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.loop.run_until_complete(teardown_database(cls.session))
+
+    def setUp(self):
+        self.notifier.reset_mock()
 
     def test_create_flag(self):
         self.loop.run_until_complete(self.async_test_create_flag())
@@ -108,7 +113,7 @@ class TestFeatureFlagAPI(unittest.TestCase):
             flag_id = response_data["id"]
             code = response_data["code"]
 
-            self.redis_connection.delete(f'feature-flag:{code}')
+            self.redis_connection.delete(f"feature-flag:{code}")
             response = await client.get(f"/api/feature-flags/{code}")
             self.assertEqual(response.status_code, 200)
 
@@ -138,9 +143,33 @@ class TestFeatureFlagAPI(unittest.TestCase):
 
             limit = 1
             offset = 0
-            response = await client.get(f"/api/feature-flags/list", params={"limit": limit, "offset": offset})
+            response = await client.get(
+                f"/api/feature-flags/list", params={"limit": limit, "offset": offset}
+            )
             list_response: list[object] = response.json()
             assert len(list_response) == limit
+
+    def test_delete_flag(self):
+        self.loop.run_until_complete(self.async_test_delete_flag())
+
+    async def async_test_delete_flag(self):
+        flag_data = {
+            "name": random_word(),
+            "code": random_word(),
+            "description": fake.sentence(),
+            "enabled": False,
+        }
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post("/api/feature-flags", json=flag_data)
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            code = response_data["code"]
+
+            response = await client.delete(f"/api/feature-flags/{code}")
+            self.assertEqual(response.status_code, 200)
+
+            self.notifier.send.assert_called_once_with(ANY, ChangeStatus.DELETED)
 
     def test_enable_flag(self):
         self.loop.run_until_complete(self.async_test_enable_flag())
@@ -157,11 +186,12 @@ class TestFeatureFlagAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
 
             response_data = response.json()
-            flag_id = response_data["id"]
             code = response_data["code"]
 
             response = await client.post(f"/api/feature-flags/{code}/enable")
             self.assertEqual(response.status_code, 200)
+
+            self.notifier.send.assert_called_once_with(ANY, ChangeStatus.ENABLED)
 
     def test_disable_flag(self):
         self.loop.run_until_complete(self.async_test_disable_flag())
@@ -190,16 +220,19 @@ class TestFeatureFlagAPI(unittest.TestCase):
             self.assertEqual(response_data["id"], flag_id)
             self.assertEqual(response_data["enabled"], False)
 
+            self.notifier.send.assert_called_once_with(ANY, ChangeStatus.DISABLED)
+
     @classmethod
     @asynccontextmanager
     async def _get_async_session(cls):
         # Create and manage the session, yield it for usage, and clean up after
-        session: AsyncSession = session_factory()  # Ensure this creates an asynchronous session
+        session: AsyncSession = (
+            session_factory()
+        )  # Ensure this creates an asynchronous session
         try:
             yield session
         finally:
             await session.close()  # Close the session after usage
-
 
 
 if __name__ == "__main__":

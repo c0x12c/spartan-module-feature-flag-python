@@ -2,13 +2,21 @@ import os
 import string
 from asyncio import current_task
 from typing import AsyncGenerator
+from unittest.mock import MagicMock
 
 import sqlparse
-
 from faker import Faker
 from redis import RedisCluster
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_scoped_session, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_scoped_session,
+    async_sessionmaker,
+)
+
+from feature_flag.notification.actions import ChangeStatus
+from feature_flag.notification.slack_notifier import SlackNotifier
 
 fake = Faker()
 DATABASE_URL = "postgresql+asyncpg://local:local@localhost:5432/local"
@@ -28,7 +36,6 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Create and get database session.
 
-    :param request: current request.
     :yield: database session.
     """
     session: AsyncSession = session_factory()
@@ -44,6 +51,19 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 def get_redis_connection():
     # Initialize the RedisCluster object
     return RedisCluster.from_url(url=f"redis://localhost:30001", decode_responses=True)
+
+
+mock_slack_notifier = MagicMock(
+    wraps=SlackNotifier(
+        slack_webhook_url="xxx", excluded_statuses=[ChangeStatus.ENABLED]
+    )
+)
+
+
+def get_slack_notifier():
+    global mock_slack_notifier
+    mock_slack_notifier.send = MagicMock(name="send")
+    return mock_slack_notifier
 
 
 async def setup_database(session: AsyncSession, sql_file="setup.sql"):

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Slack notifier
+
 ### Changed
 
 - Refactored and optimized PostgresRepository, FeatureFlagService, and BaseRepository.

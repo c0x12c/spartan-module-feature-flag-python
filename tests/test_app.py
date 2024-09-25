@@ -5,25 +5,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from feature_flag.core.cache import RedisCache
 from feature_flag.models.feature_flag import FeatureFlag
+from feature_flag.notification.notifier import Notifier
 from feature_flag.repositories.postgres_repository import PostgresRepository
-from feature_flag.services.feature_flag_service import FeatureFlagService, FeatureFlagError, FeatureFlagNotFoundError
-from tests.test_utils import get_redis_connection, get_db_session
+from feature_flag.services.feature_flag_service import (
+    FeatureFlagService,
+    FeatureFlagError,
+    FeatureFlagNotFoundError,
+)
+from tests.test_utils import get_redis_connection, get_db_session, get_slack_notifier
 
 app = FastAPI()
 
 
 def get_feature_flag_service(
-        db_connection: AsyncSession = Depends(get_db_session),
-        redis_connection: RedisCluster = Depends(get_redis_connection),
+    db_connection: AsyncSession = Depends(get_db_session),
+    redis_connection: RedisCluster = Depends(get_redis_connection),
+    notifier: Notifier = Depends(get_slack_notifier),
 ):
     repository = PostgresRepository(db_connection)
     cache = RedisCache(redis_connection, namespace="feature-flag")
-    return FeatureFlagService(repository, cache)
+    return FeatureFlagService(repository=repository, cache=cache, notifier=notifier)
 
 
 @app.post("/api/feature-flags")
 async def create_flag(
-        flag_data: dict, service: FeatureFlagService = Depends(get_feature_flag_service)
+    flag_data: dict, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
     try:
         feature_flag = await service.create_feature_flag(flag_data)
@@ -34,7 +40,9 @@ async def create_flag(
 
 @app.get("/api/feature-flags")
 async def list_flags(
-        skip: int = 0, limit: int = 100, service: FeatureFlagService = Depends(get_feature_flag_service)
+    skip: int = 0,
+    limit: int = 100,
+    service: FeatureFlagService = Depends(get_feature_flag_service),
 ):
     try:
         feature_flags = await service.list_feature_flags(limit=limit, skip=skip)
@@ -45,7 +53,7 @@ async def list_flags(
 
 @app.get("/api/feature-flags/{code}")
 async def get_flag(
-        code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
+    code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
     try:
         feature_flag = await service.get_feature_flag_by_code(code)
@@ -58,9 +66,9 @@ async def get_flag(
 
 @app.put("/api/feature-flags/{code}")
 async def update_flag(
-        code: str,
-        flag_data: dict,
-        service: FeatureFlagService = Depends(get_feature_flag_service),
+    code: str,
+    flag_data: dict,
+    service: FeatureFlagService = Depends(get_feature_flag_service),
 ):
     try:
         updated_flag = await service.update_feature_flag(code, flag_data)
@@ -73,7 +81,7 @@ async def update_flag(
 
 @app.delete("/api/feature-flags/{code}")
 async def delete_flag(
-        code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
+    code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
     try:
         await service.delete_feature_flag(code)
@@ -86,7 +94,7 @@ async def delete_flag(
 
 @app.post("/api/feature-flags/{code}/enable", response_model=FeatureFlag)
 async def enable_feature_flag(
-        code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
+    code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
     try:
         flag = await service.enable_feature_flag(code)
@@ -99,7 +107,7 @@ async def enable_feature_flag(
 
 @app.post("/api/feature-flags/{code}/disable", response_model=FeatureFlag)
 async def disable_feature_flag(
-        code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
+    code: str, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
     try:
         flag = await service.disable_feature_flag(code)

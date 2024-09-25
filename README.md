@@ -1,3 +1,5 @@
+from tkinter.constants import DISABLEDfrom tkinter.constants import DISABLEDfrom feature_flag.notification.actions import ChangeStatusfrom feature_flag.notification.actions import ChangeStatus
+
 # spartan-module-feature-flag
 
 This module provides a flexible and standardized way to manage feature flags in Python applications. It supports PostgreSQL for persistent storage and optional Redis caching for improved performance.
@@ -6,6 +8,7 @@ This module provides a flexible and standardized way to manage feature flags in 
 - **CRUD Operations**: Create, read, update, and delete feature flags.
 - **Database Support**: PostgreSQL integration.
 - **Optional Redis Caching**: Cache feature flag data for faster access. Redis integration is optional and can be omitted.
+- **Optional Slack Notifier**: Send notification to a Slack channel.
 
 ## Installation
 To install the module and its dependencies, use:
@@ -13,8 +16,25 @@ To install the module and its dependencies, use:
   poetry install
   ```
 
-## Example Usage
+## Usage
+
+### Example Usage
 In the [`examples/basic-usage`](./examples/basic-usage) directory, you will find a complete example of how to use the Feature Flag module in a FastAPI application.
+
+### Slack Notifier
+
+- Attributes
+  - `webhook_url`: This attribute stores the Slack webhook URL used to send messages to the specified Slack channel.
+  - `excluded_statuses`: This attribute is a list that specifies which status changes should not trigger notifications to the Slack channel.
+    - If set to `None`, all status changes will trigger notifications.
+
+- Sample Code
+  ```python
+   slack_notifier = SlackNotifier(
+       webhook_url='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
+       excluded_statuses=[ChangeStatus.DELETED, ChangeStatus,DISABLED]
+   )
+  ```
 
 ## Development
 

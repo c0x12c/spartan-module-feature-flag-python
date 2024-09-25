@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -5,6 +7,7 @@ from redis import RedisCluster
 
 from feature_flag.core.cache import RedisCache
 from feature_flag.models.feature_flag import FeatureFlag
+from feature_flag.notification.slack_notifier import SlackNotifier
 from feature_flag.repositories.postgres_repository import PostgresRepository
 from feature_flag.services.feature_flag_service import FeatureFlagService
 
@@ -30,7 +33,9 @@ cache = RedisCache(connection=redis_connection, namespace="feature-flag")
 # Dependency to get FeatureFlagService
 async def get_feature_flag_service(db: AsyncSession = Depends(get_db)):
     repository = PostgresRepository[FeatureFlag](session=db)
-    return FeatureFlagService(repository=repository, cache=cache)
+    slack_webhook_url = os.getenv('SLACK_WEBHOOK_URL')
+    notifier = SlackNotifier(slack_webhook_url=slack_webhook_url) if slack_webhook_url else None
+    return FeatureFlagService(repository=repository, cache=cache, notifier=notifier)
 
 
 @app.post("/api/feature-flags", response_model=FeatureFlag)
@@ -48,8 +53,7 @@ async def get_feature(code: str, service: FeatureFlagService = Depends(get_featu
 
 @app.patch("/api/feature-flags/{code}/enable", response_model=FeatureFlag)
 async def enable_feature_flag(code: str, service: FeatureFlagService = Depends(get_feature_flag_service)):
-    await service.enable_feature_flag(code)
-    flag = await service.get_feature_flag_by_code(code)
+    flag = await service.enable_feature_flag(code)
     return flag
 
 
