@@ -31,14 +31,22 @@ class SlackNotifier(Notifier):
         """
 
         try:
+            logger.debug(
+                f"Sending notification for feature flag with [code={feature_flag.code}, changeStatus={change_status}]"
+            )
             if self.excluded_statuses and change_status in self.excluded_statuses:
+                logger.debug(
+                    f"ChangeStatus {change_status} is in the excluded statuses list; notification will not be sent."
+                )
                 return
 
             message = self._build_message(feature_flag, change_status)
             payload = {"text": message}
-            print(f"Sending notification: {message}")
             self._perform_send(payload=payload)
-        except requests.exceptions.HTTPError as e:
+            logger.debug(
+                f"Notification for feature flag with [code={feature_flag.code}, changeStatus={change_status}] sent successfully"
+            )
+        except Exception as e:
             raise NotifierError(f"Error sending Slack notification: {e}") from e
 
     def _perform_send(self, payload: dict):
