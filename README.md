@@ -1,5 +1,3 @@
-from tkinter.constants import DISABLEDfrom tkinter.constants import DISABLEDfrom feature_flag.notification.actions import ChangeStatusfrom feature_flag.notification.actions import ChangeStatus
-
 # spartan-module-feature-flag
 
 This module provides a flexible and standardized way to manage feature flags in Python applications. It supports PostgreSQL for persistent storage and optional Redis caching for improved performance.
@@ -25,15 +23,20 @@ In the [`examples/basic-usage`](./examples/basic-usage) directory, you will find
 
 - Attributes
   - `webhook_url`: This attribute stores the Slack webhook URL used to send messages to the specified Slack channel.
-  - `excluded_statuses`: This attribute is a list that specifies which status changes should not trigger notifications to the Slack channel.
+  - `excluded_statuses` (Optional): This attribute is a list that specifies which status changes should not trigger notifications to the Slack channel.
     - If set to `None`, all status changes will trigger notifications.
+  - `headers` (Optional): A dictionary where you can specify additional HTTP headers to include in the Slack notification requests.
 
 - Sample Code
   ```python
-   slack_notifier = SlackNotifier(
-       webhook_url='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
-       excluded_statuses=[ChangeStatus.DELETED, ChangeStatus,DISABLED]
-   )
+  slack_notifier = SlackNotifier(
+    webhook_url='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
+    excluded_statuses=[ChangeStatus.DELETED, ChangeStatus,DISABLED],
+    headers = {
+      "Authorization": "Bearer xoxb-your-slack-token",
+      "Content-Type": "application/json"
+    }
+  )
   ```
 
 ## Development

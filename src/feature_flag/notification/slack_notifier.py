@@ -4,7 +4,7 @@ import requests
 
 from feature_flag.core.exceptions import NotifierError
 from feature_flag.models.feature_flag import FeatureFlag
-from feature_flag.notification.actions import ChangeStatus
+from feature_flag.notification.change_status import ChangeStatus
 from feature_flag.notification.notifier import Notifier
 
 logger = logging.getLogger(__name__)
@@ -12,10 +12,22 @@ logger = logging.getLogger(__name__)
 
 class SlackNotifier(Notifier):
     def __init__(
-        self, slack_webhook_url: str, excluded_statuses: list[ChangeStatus] = None
+        self,
+        slack_webhook_url: str,
+        excluded_statuses: list[ChangeStatus] = None,
+        headers: dict = None,
     ):
+        """
+        Initializes the SlackNotifier.
+
+        Args:
+            slack_webhook_url (str): The webhook URL to send Slack notifications.
+            excluded_statuses (list[ChangeStatus], optional): Statuses for which notifications should not be sent.
+            headers (dict, optional): Optional headers to include in the HTTP request.
+        """
         self.slack_webhook_url = slack_webhook_url
         self.excluded_statuses = excluded_statuses
+        self.headers = headers or {}
 
     def send(self, feature_flag: FeatureFlag, change_status: ChangeStatus):
         """
@@ -50,7 +62,12 @@ class SlackNotifier(Notifier):
             raise NotifierError(f"Error sending Slack notification: {e}") from e
 
     def _perform_send(self, payload: dict):
-        response = requests.post(self.slack_webhook_url, json=payload)
+        response = requests.post(
+            self.slack_webhook_url, json=payload, headers=self.headers
+        )
+        logger.debug(
+            f"Slack API response: status={response.status_code}, body={response.text}"
+        )
         response.raise_for_status()
 
     @staticmethod

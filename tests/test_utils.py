@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from feature_flag.notification.actions import ChangeStatus
+from feature_flag.notification.change_status import ChangeStatus
 from feature_flag.notification.slack_notifier import SlackNotifier
 
 fake = Faker()

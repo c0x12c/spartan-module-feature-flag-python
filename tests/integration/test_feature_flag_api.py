@@ -8,7 +8,7 @@ from faker import Faker
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from feature_flag.notification.actions import ChangeStatus
+from feature_flag.notification.change_status import ChangeStatus
 from tests.test_app import app
 from tests.test_utils import (
     get_redis_connection,
