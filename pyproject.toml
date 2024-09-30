@@ -22,11 +22,11 @@ sqlparse = "^0.5.1"
 pytest = "^8.3.2"
 pre-commit = ">=2.13,<4.0"
 black = ">=21.7,<25.0"
-faker = ">=27,<30"
+faker = ">=27,<31"
 fastapi = ">=0.68,<0.116"
 requests = "^2.26.0"
 setuptools = ">=65,<76"
-uvicorn = ">=0.15,<0.31"
+uvicorn = ">=0.15,<0.32"
 
 [build-system]
 requires = ["poetry>=1.1.0"]
